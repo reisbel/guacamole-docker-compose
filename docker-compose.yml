@@ -1,0 +1,45 @@
+version: "3"
+services:
+
+  init-guacamole-db:
+    image: guacamole/guacamole:latest
+    command: ["/bin/sh", "-c", "test -e /init/initdb.sql && echo 'init file already exists' || /opt/guacamole/bin/initdb.sh --postgres > /init/initdb.sql" ]
+    volumes:
+      - dbinit:/init    
+
+  postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    volumes:
+      - dbinit:/docker-entrypoint-initdb.d        
+      - dbdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-guacdb}
+      POSTGRES_PASSWORD: 
+    depends_on:
+      - init-guacamole-db
+
+  guacd:
+    image: guacamole/guacd:latest
+    restart: unless-stopped
+
+  guac:
+    image: guacamole/guacamole:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      GUACD_HOSTNAME: guacd
+      POSTGRES_HOSTNAME: postgres
+      POSTGRES_DATABASE: ${POSTGRES_USER:-guacdb}
+      POSTGRES_USER: ${POSTGRES_USER:-guacdb}
+      POSTGRES_PASSWORD:
+    depends_on:
+      - postgres
+      - guacd
+
+volumes:
+  dbinit:
+    driver: local
+  dbdata:
+    driver: local
