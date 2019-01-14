@@ -33,6 +33,7 @@ docker-compose up -d
 Guacamole is now listening on port 8080
 
 default username: guacadmin
+
 default password: guacadmin
 
 Be sure to change the default password.
